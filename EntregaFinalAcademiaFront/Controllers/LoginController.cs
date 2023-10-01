@@ -25,17 +25,44 @@ namespace EntregaFinalAcademiaFront.Controllers
 
 		public async Task<IActionResult> Ingresar(LoginDto login)
 		{
-			var baseApi = new BaseApi(_httpClient);
-			var token = await baseApi.PostToApi("Login", login);
+			try
+			{
+				var baseApi = new BaseApi(_httpClient);
+				var token = await baseApi.PostToApi("Login", login);
 
-			var resultadoLogin = token as OkObjectResult;
-			var resultadoObjeto = JsonConvert.DeserializeObject<Models.LoginResponse>(resultadoLogin.Value.ToString());
+				var resultadoLogin = token as OkObjectResult;
+				var resultadoObjeto = JsonConvert.DeserializeObject<Models.LoginResponse>(resultadoLogin.Value.ToString());
 
+				var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
 
-			var homeViewModel = new HomeViewModel();
-			homeViewModel.Token = resultadoObjeto.Data.Token;
+				Claim claimRole = new(ClaimTypes.Role, "Adminitrador");
+				Claim claimNombre = new(ClaimTypes.Name, resultadoObjeto.Data.Name);
+				Claim claimEmail = new(ClaimTypes.Email, resultadoObjeto.Data.Email);
 
-			return View("~/Views/Home/Index.cshtml", homeViewModel);
+				identity.AddClaim(claimRole);
+				identity.AddClaim(claimNombre);
+				identity.AddClaim(claimEmail);
+
+				var claimPrincipal = new ClaimsPrincipal(identity);
+
+				await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimPrincipal, new AuthenticationProperties
+				{
+					ExpiresUtc = DateTime.Now.AddHours(1),
+				});
+
+				//HttpContext.Session.SetString("Token", resultadoObjeto.Data.Token);
+
+				var homeViewModel = new HomeViewModel();
+				homeViewModel.Token = resultadoObjeto.Data.Token;
+
+				return View("~/Views/Home/Index.cshtml", homeViewModel);
+			}
+			catch (Exception)
+			{
+
+				throw;
+			}
+			
 		}
 
 		public async Task<IActionResult> CerrarSesion()

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 namespace EntregaFinalAcademiaFront
 {
     public class Program
@@ -14,8 +16,35 @@ namespace EntregaFinalAcademiaFront
                 config.BaseAddress = new Uri(builder.Configuration["ServiceUrl:ApiUrl"]);
             });
 
+			builder.Services.AddAuthentication(option =>
+			{
+				option.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				option.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				option.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+			}).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, config =>
+			{
+				config.Events.OnRedirectToLogin = context =>
+				{
+					context.Response.Redirect("https://localhost:7212");
+					return Task.CompletedTask;
+				};
+			});
 
-            var app = builder.Build();
+			builder.Services.AddAuthorization(options =>
+			{
+				options.AddPolicy("ADMINISTRADOR", policy =>
+				{
+					policy.RequireRole("Administrador");
+				});
+
+				options.AddPolicy("CONSULTOR", policy =>
+				{
+					policy.RequireRole("Consultor");
+				});
+			});
+
+
+			var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -30,6 +59,7 @@ namespace EntregaFinalAcademiaFront
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(
