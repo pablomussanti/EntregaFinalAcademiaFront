@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Cryptography;
 
 namespace EntregaFinalAcademiaFront
 {
@@ -32,19 +33,20 @@ namespace EntregaFinalAcademiaFront
 
 			builder.Services.AddAuthorization(options =>
 			{
-				options.AddPolicy("ADMINISTRADOR", policy =>
+				options.AddPolicy("Administrador", policy =>
 				{
 					policy.RequireRole("Administrador");
 				});
 
-				options.AddPolicy("CONSULTOR", policy =>
+				options.AddPolicy("Consultor", policy =>
 				{
 					policy.RequireRole("Consultor");
 				});
 			});
 
+            builder.Services.AddSession();
 
-			var app = builder.Build();
+            var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -61,6 +63,8 @@ namespace EntregaFinalAcademiaFront
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseSession();
 
             app.MapControllerRoute(
                 name: "default",

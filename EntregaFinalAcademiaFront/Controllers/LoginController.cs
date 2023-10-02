@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using EntregaFinalAcademiaFront.ViewModels;
+using Newtonsoft.Json.Linq;
+using System.IdentityModel.Tokens.Jwt;
+using System.Diagnostics.Eventing.Reader;
 
 namespace EntregaFinalAcademiaFront.Controllers
 {
@@ -35,11 +38,34 @@ namespace EntregaFinalAcademiaFront.Controllers
 
 				var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
 
-				Claim claimRole = new(ClaimTypes.Role, "Adminitrador");
+                JwtSecurityTokenHandler hand = new JwtSecurityTokenHandler();
+
+                var tokenData = hand.ReadJwtToken(resultadoObjeto.Data.Token);
+
+				ClaimsIdentity claimsIdentity = new ClaimsIdentity();
+
+                foreach (var claim in tokenData.Claims)
+                {
+                    if (!claimsIdentity.HasClaim(claim.Type, claim.Value))
+                        claimsIdentity.AddClaim(claim);
+                }
+
+				var claimPrincipalData = new ClaimsPrincipal(claimsIdentity);
+
+				Claim claimRole;
+				if (claimPrincipalData.Claims.ElementAt(3).Value == "1")
+				{
+                    claimRole = new(ClaimTypes.Role, "Administrador");
+                }
+				else
+				{
+                    claimRole = new(ClaimTypes.Role, "Consultor");
+                }
+
 				Claim claimNombre = new(ClaimTypes.Name, resultadoObjeto.Data.Name);
 				Claim claimEmail = new(ClaimTypes.Email, resultadoObjeto.Data.Email);
 
-				identity.AddClaim(claimRole);
+                identity.AddClaim(claimRole);
 				identity.AddClaim(claimNombre);
 				identity.AddClaim(claimEmail);
 
@@ -50,7 +76,7 @@ namespace EntregaFinalAcademiaFront.Controllers
 					ExpiresUtc = DateTime.Now.AddHours(1),
 				});
 
-				//HttpContext.Session.SetString("Token", resultadoObjeto.Data.Token);
+				HttpContext.Session.SetString("Token", resultadoObjeto.Data.Token);
 
 				var homeViewModel = new HomeViewModel();
 				homeViewModel.Token = resultadoObjeto.Data.Token;

@@ -8,10 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\js\Home\" />
+    <Folder Include="wwwroot\js\Utils\" />
+    <Folder Include="wwwroot\js\User\" />
   </ItemGroup>
 
 </Project>
