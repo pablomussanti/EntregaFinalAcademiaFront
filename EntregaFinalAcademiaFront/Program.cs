@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Cryptography;
+
 namespace EntregaFinalAcademiaFront
 {
     public class Program
@@ -8,6 +11,40 @@ namespace EntregaFinalAcademiaFront
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddHttpClient("useApi", config =>
+            {
+                config.BaseAddress = new Uri(builder.Configuration["ServiceUrl:ApiUrl"]);
+            });
+
+			builder.Services.AddAuthentication(option =>
+			{
+				option.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				option.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				option.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+			}).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, config =>
+			{
+				config.Events.OnRedirectToLogin = context =>
+				{
+					context.Response.Redirect("https://localhost:7212");
+					return Task.CompletedTask;
+				};
+			});
+
+			builder.Services.AddAuthorization(options =>
+			{
+				options.AddPolicy("Administrador", policy =>
+				{
+					policy.RequireRole("Administrador");
+				});
+
+				options.AddPolicy("Consultor", policy =>
+				{
+					policy.RequireRole("Consultor");
+				});
+			});
+
+            builder.Services.AddSession();
 
             var app = builder.Build();
 
@@ -24,11 +61,14 @@ namespace EntregaFinalAcademiaFront
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseSession();
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Login}/{action=Login}/{id?}");
 
             app.Run();
         }
